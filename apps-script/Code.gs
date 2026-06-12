@@ -54,6 +54,7 @@ function normalizeState_(state) {
   return {
     eventId: state.eventId || Utilities.getUuid(),
     exhibitionName: state.exhibitionName || "",
+    exhibitionDate: state.exhibitionDate || "",
     password: state.password || "",
     paymentAccount: state.paymentAccount || "",
     published: Boolean(state.published),

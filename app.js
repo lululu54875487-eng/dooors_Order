@@ -10,6 +10,7 @@ function createEmptyState() {
   return {
     eventId: createId(),
     exhibitionName: "",
+    exhibitionDate: "",
     password: "",
     paymentAccount: "",
     published: false,
@@ -27,11 +28,12 @@ let editingProductId = null;
 
 const el = {
   modeStatus: document.querySelector("#modeStatus"),
-  todayLabel: document.querySelector("#todayLabel"),
+  setupHint: document.querySelector("#setupHint"),
   adminView: document.querySelector("#adminView"),
   sellerView: document.querySelector("#sellerView"),
   customerView: document.querySelector("#customerView"),
   exhibitionName: document.querySelector("#exhibitionName"),
+  exhibitionDate: document.querySelector("#exhibitionDate"),
   eventPassword: document.querySelector("#eventPassword"),
   paymentAccount: document.querySelector("#paymentAccount"),
   publishBtn: document.querySelector("#publishBtn"),
@@ -281,13 +283,9 @@ function render() {
     return;
   }
 
-  el.todayLabel.textContent = new Date().toLocaleDateString("zh-TW", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    weekday: "short"
-  });
+  el.setupHint.textContent = state.exhibitionDate ? `展覽日期：${formatDisplayDate(state.exhibitionDate)}` : "可提前完成展覽資訊、商品與收款設定";
   el.exhibitionName.value = state.exhibitionName;
+  el.exhibitionDate.value = state.exhibitionDate || "";
   el.eventPassword.value = state.password;
   el.paymentAccount.value = state.paymentAccount;
   el.gasUrl.value = gasUrl;
@@ -415,7 +413,8 @@ function renderTotals() {
 
 function renderCustomer() {
   el.customerTitle.textContent = state.exhibitionName || "展覽下單";
-  el.customerHint.textContent = state.published ? `${state.exhibitionName || "本次展覽"} 開放下單中` : "目前尚未開放下單";
+  const eventLabel = [state.exhibitionName || "本次展覽", state.exhibitionDate ? formatDisplayDate(state.exhibitionDate) : ""].filter(Boolean).join(" · ");
+  el.customerHint.textContent = state.published ? `${eventLabel} 開放下單中` : "目前尚未開放下單";
   const unlocked = sessionStorage.getItem(`order-unlocked-${state.eventId}`) === "1";
   el.passwordPanel.classList.toggle("hidden", unlocked);
   el.orderPanel.classList.toggle("hidden", !unlocked || !state.published);
@@ -431,6 +430,17 @@ function renderProductOptions() {
     option.value = product.id;
     option.textContent = `${product.name} ${formatMoney(product.price)}${product.limit ? ` / 上限 ${product.limit}` : ""}`;
     el.productSelect.append(option);
+  });
+}
+
+function formatDisplayDate(value) {
+  const date = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString("zh-TW", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    weekday: "short"
   });
 }
 
@@ -627,6 +637,12 @@ function renderQr(text) {
 
 el.exhibitionName.addEventListener("input", () => {
   state.exhibitionName = el.exhibitionName.value.trim();
+  render();
+  persist();
+});
+
+el.exhibitionDate.addEventListener("input", () => {
+  state.exhibitionDate = el.exhibitionDate.value;
   render();
   persist();
 });

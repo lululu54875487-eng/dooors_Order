@@ -14,6 +14,7 @@ if (-not (Test-Path $DataFile)) {
   @{
     eventId = [guid]::NewGuid().ToString()
     exhibitionName = ""
+    exhibitionDate = ""
     password = ""
     paymentAccount = ""
     published = $false
