@@ -17,6 +17,7 @@ if (-not (Test-Path $DataFile)) {
     exhibitionDate = ""
     headerImage = ""
     password = ""
+    onsiteCode = ""
     paymentAccount = ""
     published = $false
     products = @()

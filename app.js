@@ -13,6 +13,7 @@ function createEmptyState() {
     exhibitionDate: "",
     headerImage: "",
     password: "",
+    onsiteCode: "",
     paymentAccount: "",
     published: false,
     products: [...defaultProducts],
@@ -40,6 +41,7 @@ const el = {
   heroImage: document.querySelector("#heroImage"),
   removeHeaderImageBtn: document.querySelector("#removeHeaderImageBtn"),
   eventPassword: document.querySelector("#eventPassword"),
+  onsiteCode: document.querySelector("#onsiteCode"),
   paymentAccount: document.querySelector("#paymentAccount"),
   publishBtn: document.querySelector("#publishBtn"),
   closeBtn: document.querySelector("#closeBtn"),
@@ -77,6 +79,7 @@ const el = {
   productSelect: document.querySelector("#productSelect"),
   quantity: document.querySelector("#quantity"),
   paymentMethod: document.querySelector("#paymentMethod"),
+  orderOnsiteCode: document.querySelector("#orderOnsiteCode"),
   note: document.querySelector("#note"),
   checkoutTotal: document.querySelector("#checkoutTotal"),
   successMessage: document.querySelector("#successMessage"),
@@ -293,10 +296,11 @@ function render() {
   el.exhibitionName.value = state.exhibitionName;
   el.exhibitionDate.value = state.exhibitionDate || "";
   el.eventPassword.value = state.password;
+  el.onsiteCode.value = state.onsiteCode || "";
   el.paymentAccount.value = state.paymentAccount;
   el.gasUrl.value = gasUrl;
   el.customerUrl.value = getCustomerUrl();
-  el.publishBtn.disabled = !state.exhibitionName.trim() || !state.password.trim() || !state.products.length;
+  el.publishBtn.disabled = !state.exhibitionName.trim() || !state.password.trim() || !state.onsiteCode.trim() || !state.products.length;
   el.closeBtn.disabled = !state.published;
 
   renderProducts();
@@ -432,7 +436,7 @@ function renderCustomer() {
   el.customerTitle.textContent = state.exhibitionName || "展覽下單";
   const eventLabel = [state.exhibitionName || "本次展覽", state.exhibitionDate ? formatDisplayDate(state.exhibitionDate) : ""].filter(Boolean).join(" · ");
   el.customerHint.textContent = state.published ? `${eventLabel} 開放下單中` : "目前尚未開放下單";
-  const unlocked = sessionStorage.getItem(`order-unlocked-${state.eventId}`) === "1";
+  const unlocked = sessionStorage.getItem(getPasswordSessionKey()) === state.password;
   el.passwordPanel.classList.toggle("hidden", unlocked);
   el.orderPanel.classList.toggle("hidden", !unlocked || !state.published);
   el.successPanel.classList.add("hidden");
@@ -475,6 +479,10 @@ function updateCheckout() {
   }
   const quantity = Math.max(1, Number(el.quantity.value) || 1);
   el.checkoutTotal.textContent = formatMoney(Number(product.price || 0) * quantity);
+}
+
+function getPasswordSessionKey() {
+  return `order-unlocked-${state.eventId}`;
 }
 
 function openProductDialog(product = null) {
@@ -591,6 +599,11 @@ function submitOrder() {
   const product = state.products.find((item) => item.id === el.productSelect.value);
   if (!product) return;
 
+  if (el.orderOnsiteCode.value.trim() !== state.onsiteCode) {
+    toast("現場驗證碼不正確，請向攤位確認");
+    return;
+  }
+
   const quantity = Number(el.quantity.value) || 1;
   if (product.limit && quantity > Number(product.limit)) {
     toast(`此商品每單最多 ${product.limit} 件`);
@@ -609,6 +622,7 @@ function submitOrder() {
     quantity,
     total: Number(product.price || 0) * quantity,
     paymentMethod: el.paymentMethod.value,
+    onsiteVerified: true,
     note: el.note.value.trim(),
     status: "pending",
     createdAt: new Date().toISOString(),
@@ -753,6 +767,13 @@ el.removeHeaderImageBtn.addEventListener("click", () => {
 
 el.eventPassword.addEventListener("input", () => {
   state.password = el.eventPassword.value.trim();
+  sessionStorage.removeItem(getPasswordSessionKey());
+  render();
+  persist();
+});
+
+el.onsiteCode.addEventListener("input", () => {
+  state.onsiteCode = el.onsiteCode.value.trim();
   render();
   persist();
 });
@@ -825,7 +846,7 @@ el.passwordForm.addEventListener("submit", (event) => {
     toast("密碼不正確");
     return;
   }
-  sessionStorage.setItem(`order-unlocked-${state.eventId}`, "1");
+  sessionStorage.setItem(getPasswordSessionKey(), state.password);
   render();
 });
 

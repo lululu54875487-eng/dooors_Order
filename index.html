@@ -60,6 +60,12 @@
           </label>
 
           <label class="field">
+            <span>現場驗證碼</span>
+            <input id="onsiteCode" type="text" placeholder="例：攤位現場公布的 4 碼口令">
+            <small class="field-note">客戶下單時必填；若擔心轉傳，可中途更換展覽密碼或現場驗證碼。</small>
+          </label>
+
+          <label class="field">
             <span>收款帳戶</span>
             <textarea id="paymentAccount" rows="4" placeholder="例：銀行代碼 000 / 帳號 123456789 / 戶名 王小明&#10;也可填寫：現場可收現金"></textarea>
           </label>
@@ -196,6 +202,10 @@
                   <option value="transfer">轉帳</option>
                   <option value="cash">現金</option>
                 </select>
+              </label>
+              <label class="field wide">
+                <span>現場驗證碼</span>
+                <input id="orderOnsiteCode" type="text" placeholder="請輸入攤位現場公布的驗證碼" required>
               </label>
               <label class="field wide">
                 <span>備註</span>

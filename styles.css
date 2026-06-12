@@ -320,6 +320,12 @@ h2 {
   font-weight: 700;
 }
 
+.field-note {
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
 input,
 select,
 textarea {

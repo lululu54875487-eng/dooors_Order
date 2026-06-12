@@ -57,6 +57,7 @@ function normalizeState_(state) {
     exhibitionDate: state.exhibitionDate || "",
     headerImage: state.headerImage || "",
     password: state.password || "",
+    onsiteCode: state.onsiteCode || "",
     paymentAccount: state.paymentAccount || "",
     published: Boolean(state.published),
     products: Array.isArray(state.products) ? state.products : [],
