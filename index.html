@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>展覽訂單系統</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Exhibition Order Desk</p>
+        <h1>展覽訂單系統</h1>
+      </div>
+      <div class="status-pill" id="modeStatus">佈展設定</div>
+    </header>
+
+    <main class="app-shell">
+      <section class="workspace" id="adminView">
+        <div class="panel setup-panel">
+          <div class="panel-heading">
+            <div>
+              <h2>佈展設定</h2>
+              <p id="todayLabel"></p>
+            </div>
+            <button class="icon-button" id="resetBtn" type="button" title="重新建立本次展覽" aria-label="重新建立本次展覽">↻</button>
+          </div>
+
+          <label class="field">
+            <span>展覽名稱</span>
+            <input id="exhibitionName" type="text" placeholder="例：台北手作市集 6/15">
+          </label>
+
+          <label class="field">
+            <span>本次展覽密碼</span>
+            <input id="eventPassword" type="text" placeholder="當天公布給客戶輸入">
+          </label>
+
+          <label class="field">
+            <span>收款帳戶</span>
+            <textarea id="paymentAccount" rows="4" placeholder="例：銀行代碼 000 / 帳號 123456789 / 戶名 王小明&#10;也可填寫：現場可收現金"></textarea>
+          </label>
+
+          <div class="actions">
+            <button class="primary" id="publishBtn" type="button">發布展覽</button>
+            <button class="secondary" id="closeBtn" type="button">關閉下單</button>
+          </div>
+
+          <div class="share-box">
+            <label class="field">
+              <span>Google Apps Script Web App URL</span>
+              <input id="gasUrl" type="url" placeholder="貼上結尾是 /exec 的網址，用來跨手機同步訂單">
+            </label>
+            <div class="actions">
+              <button class="secondary" id="saveGasBtn" type="button">儲存同步網址</button>
+              <button class="secondary" id="clearGasBtn" type="button">清除</button>
+            </div>
+            <p class="helper" id="remoteStatus">尚未設定雲端同步。只放 GitHub Pages 時，建議搭配 Google Sheets 收單。</p>
+          </div>
+
+          <div class="share-box">
+            <label class="field">
+              <span>給客戶掃描的網址</span>
+              <input id="customerUrl" type="text" readonly>
+            </label>
+            <div class="actions">
+              <button class="secondary" id="copyUrlBtn" type="button">複製網址</button>
+              <button class="secondary" id="openCustomerBtn" type="button">預覽客戶頁</button>
+            </div>
+            <div class="qr-box">
+              <img id="qrImage" alt="客戶下單 QR Code">
+              <p>將這個 QR Code 放在展場，客戶掃描後輸入當天密碼即可下單。</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel product-panel">
+          <div class="panel-heading">
+            <div>
+              <h2>商品與限制</h2>
+              <p>可上傳 CSV，欄位：商品名稱, 單價, 每單上限</p>
+            </div>
+            <button class="icon-button" id="addProductBtn" type="button" title="新增商品" aria-label="新增商品">＋</button>
+          </div>
+
+          <div class="upload-row">
+            <input id="productFile" type="file" accept=".csv,text/csv">
+            <button class="secondary" id="downloadTemplateBtn" type="button">下載範本</button>
+          </div>
+
+          <div class="products" id="products"></div>
+        </div>
+      </section>
+
+      <section class="workspace lower" id="sellerView">
+        <div class="panel summary-panel">
+          <div class="panel-heading">
+            <div>
+              <h2>訂單狀態</h2>
+              <p id="orderCount">0 筆訂單</p>
+            </div>
+            <button class="icon-button" id="exportBtn" type="button" title="匯出 Excel" aria-label="匯出 Excel">⇩</button>
+          </div>
+          <div class="stats-grid">
+            <div><span>待收款</span><strong id="pendingAmount">$0</strong></div>
+            <div><span>已成立</span><strong id="paidAmount">$0</strong></div>
+          </div>
+          <div class="orders" id="orders"></div>
+        </div>
+
+        <div class="panel summary-panel">
+          <div class="panel-heading">
+            <div>
+              <h2>商品彙總</h2>
+              <p>只計算已收到款項的成立訂單</p>
+            </div>
+          </div>
+          <div class="totals" id="totals"></div>
+        </div>
+      </section>
+
+      <section class="customer-shell hidden" id="customerView">
+        <div class="panel customer-panel" id="passwordPanel">
+          <div class="panel-heading">
+            <div>
+              <h2 id="customerTitle">展覽下單</h2>
+              <p>請輸入現場公布的密碼</p>
+            </div>
+          </div>
+          <form id="passwordForm">
+            <label class="field">
+              <span>展覽密碼</span>
+              <input id="passwordInput" type="password" autocomplete="one-time-code" required>
+            </label>
+            <button class="primary full" type="submit">進入下單</button>
+          </form>
+        </div>
+
+        <div class="panel customer-panel hidden" id="orderPanel">
+          <div class="panel-heading">
+            <div>
+              <h2>填寫訂單</h2>
+              <p id="customerHint"></p>
+            </div>
+          </div>
+          <form id="orderForm">
+            <div class="form-grid">
+              <label class="field">
+                <span>收件人姓名</span>
+                <input id="recipientName" type="text" required>
+              </label>
+              <label class="field">
+                <span>手機</span>
+                <input id="recipientPhone" type="tel" required>
+              </label>
+              <label class="field wide">
+                <span>收件地址</span>
+                <input id="recipientAddress" type="text" required>
+              </label>
+              <label class="field">
+                <span>商品</span>
+                <select id="productSelect" required></select>
+              </label>
+              <label class="field compact">
+                <span>數量</span>
+                <input id="quantity" type="number" min="1" value="1" required>
+              </label>
+              <label class="field">
+                <span>付款方式</span>
+                <select id="paymentMethod" required>
+                  <option value="transfer">轉帳</option>
+                  <option value="cash">現金</option>
+                </select>
+              </label>
+              <label class="field wide">
+                <span>備註</span>
+                <input id="note" type="text" placeholder="尺寸、顏色、希望到貨時間等">
+              </label>
+            </div>
+            <div class="checkout-box">
+              <span>訂單金額</span>
+              <strong id="checkoutTotal">$0</strong>
+            </div>
+            <button class="primary full" type="submit">提交訂單</button>
+          </form>
+        </div>
+
+        <div class="panel customer-panel hidden" id="successPanel">
+          <div class="success-mark">✓</div>
+          <h2>訂單已送出</h2>
+          <p id="successMessage"></p>
+          <div class="payment-card">
+            <span>付款資訊</span>
+            <pre id="paymentInfo"></pre>
+          </div>
+          <p class="helper">若已轉帳，請告知現場賣家；賣家按下「已收到款項」後，訂單才算成立。</p>
+        </div>
+      </section>
+    </main>
+
+    <dialog id="productDialog">
+      <form method="dialog" class="dialog-form">
+        <h2 id="productDialogTitle">新增商品</h2>
+        <label class="field">
+          <span>商品名稱</span>
+          <input id="productName" type="text">
+        </label>
+        <label class="field">
+          <span>單價</span>
+          <input id="productPrice" type="number" min="0">
+        </label>
+        <label class="field">
+          <span>每單上限</span>
+          <input id="productLimit" type="number" min="1" placeholder="不填代表不限">
+        </label>
+        <div class="actions">
+          <button class="secondary" value="cancel">取消</button>
+          <button class="primary" id="saveProductBtn" value="default">儲存</button>
+        </div>
+      </form>
+    </dialog>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="app.js"></script>
+  </body>
+</html>
