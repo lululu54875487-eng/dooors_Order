@@ -7,7 +7,15 @@
     <link rel="stylesheet" href="styles.css">
   </head>
   <body>
+    <div class="floral-floaters" aria-hidden="true">
+      <span class="petal petal-one"></span>
+      <span class="petal petal-two"></span>
+      <span class="petal petal-three"></span>
+      <span class="leaf leaf-one"></span>
+      <span class="leaf leaf-two"></span>
+    </div>
     <header class="topbar">
+      <img class="hero-image hidden" id="heroImage" alt="">
       <div>
         <p class="eyebrow">Exhibition Order Desk</p>
         <h1>展覽訂單系統</h1>
@@ -35,6 +43,16 @@
             <span>展覽日期</span>
             <input id="exhibitionDate" type="date">
           </label>
+
+          <div class="field">
+            <span>頁首圖片</span>
+            <div class="image-upload-row">
+              <input id="headerImageFile" type="file" accept="image/*">
+              <button class="secondary" id="removeHeaderImageBtn" type="button">移除圖片</button>
+            </div>
+            <img class="header-preview hidden" id="headerPreview" alt="頁首圖片預覽">
+            <p class="helper">適合上傳品牌圖、攤位主視覺或商品氛圍照，系統會自動壓縮。</p>
+          </div>
 
           <label class="field">
             <span>本次展覽密碼</span>

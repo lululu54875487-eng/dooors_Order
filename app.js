@@ -11,6 +11,7 @@ function createEmptyState() {
     eventId: createId(),
     exhibitionName: "",
     exhibitionDate: "",
+    headerImage: "",
     password: "",
     paymentAccount: "",
     published: false,
@@ -34,6 +35,10 @@ const el = {
   customerView: document.querySelector("#customerView"),
   exhibitionName: document.querySelector("#exhibitionName"),
   exhibitionDate: document.querySelector("#exhibitionDate"),
+  headerImageFile: document.querySelector("#headerImageFile"),
+  headerPreview: document.querySelector("#headerPreview"),
+  heroImage: document.querySelector("#heroImage"),
+  removeHeaderImageBtn: document.querySelector("#removeHeaderImageBtn"),
   eventPassword: document.querySelector("#eventPassword"),
   paymentAccount: document.querySelector("#paymentAccount"),
   publishBtn: document.querySelector("#publishBtn"),
@@ -296,8 +301,19 @@ function render() {
   renderProducts();
   renderOrders();
   renderTotals();
+  renderHeaderImage();
   renderQr(el.customerUrl.value);
   renderRemoteStatus();
+}
+
+function renderHeaderImage() {
+  const hasImage = Boolean(state.headerImage);
+  el.heroImage.src = hasImage ? state.headerImage : "";
+  el.headerPreview.src = hasImage ? state.headerImage : "";
+  el.heroImage.classList.toggle("hidden", !hasImage);
+  el.headerPreview.classList.toggle("hidden", !hasImage);
+  document.querySelector(".topbar").classList.toggle("has-hero-image", hasImage);
+  el.removeHeaderImageBtn.disabled = !hasImage;
 }
 
 function renderRemoteStatus() {
@@ -419,6 +435,7 @@ function renderCustomer() {
   el.passwordPanel.classList.toggle("hidden", unlocked);
   el.orderPanel.classList.toggle("hidden", !unlocked || !state.published);
   el.successPanel.classList.add("hidden");
+  renderHeaderImage();
   renderProductOptions();
   updateCheckout();
 }
@@ -630,6 +647,51 @@ function downloadText(filename, content, type) {
   URL.revokeObjectURL(link.href);
 }
 
+function readCompressedImage(file) {
+  return new Promise((resolve, reject) => {
+    if (!file) {
+      resolve("");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("圖片讀取失敗"));
+    reader.onload = () => {
+      const image = new Image();
+      image.onerror = () => reject(new Error("圖片格式無法讀取"));
+      image.onload = () => {
+        const maxWidth = 1000;
+        const maxHeight = 320;
+        const ratio = Math.min(maxWidth / image.width, maxHeight / image.height, 1);
+        const width = Math.max(1, Math.round(image.width * ratio));
+        const height = Math.max(1, Math.round(image.height * ratio));
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const context = canvas.getContext("2d");
+        context.fillStyle = "#fffaf3";
+        context.fillRect(0, 0, width, height);
+        context.drawImage(image, 0, 0, width, height);
+
+        let quality = 0.78;
+        let dataUrl = canvas.toDataURL("image/jpeg", quality);
+        while (dataUrl.length > 42000 && quality > 0.42) {
+          quality -= 0.08;
+          dataUrl = canvas.toDataURL("image/jpeg", quality);
+        }
+
+        if (dataUrl.length > 42000) {
+          reject(new Error("圖片仍然太大，請換一張較小或較簡潔的圖片"));
+          return;
+        }
+        resolve(dataUrl);
+      };
+      image.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 function renderQr(text) {
   if (!el.qrImage) return;
   el.qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=192x192&data=${encodeURIComponent(text)}`;
@@ -645,6 +707,28 @@ el.exhibitionDate.addEventListener("input", () => {
   state.exhibitionDate = el.exhibitionDate.value;
   render();
   persist();
+});
+
+el.headerImageFile.addEventListener("change", async () => {
+  const file = el.headerImageFile.files[0];
+  if (!file) return;
+  try {
+    state.headerImage = await readCompressedImage(file);
+    el.headerImageFile.value = "";
+    render();
+    persist();
+    toast("已更新頁首圖片");
+  } catch (error) {
+    el.headerImageFile.value = "";
+    toast(error.message || "圖片上傳失敗");
+  }
+});
+
+el.removeHeaderImageBtn.addEventListener("click", () => {
+  state.headerImage = "";
+  render();
+  persist();
+  toast("已移除頁首圖片");
 });
 
 el.eventPassword.addEventListener("input", () => {

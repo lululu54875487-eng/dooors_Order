@@ -2,6 +2,7 @@
   "eventId": "today-exhibition",
   "exhibitionName": "",
   "exhibitionDate": "",
+  "headerImage": "",
   "password": "",
   "paymentAccount": "",
   "published": false,

@@ -55,6 +55,7 @@ function normalizeState_(state) {
     eventId: state.eventId || Utilities.getUuid(),
     exhibitionName: state.exhibitionName || "",
     exhibitionDate: state.exhibitionDate || "",
+    headerImage: state.headerImage || "",
     password: state.password || "",
     paymentAccount: state.paymentAccount || "",
     published: Boolean(state.published),
