@@ -55,6 +55,7 @@ const el = {
   addProductBtn: document.querySelector("#addProductBtn"),
   productFile: document.querySelector("#productFile"),
   downloadTemplateBtn: document.querySelector("#downloadTemplateBtn"),
+  exportProductsBtn: document.querySelector("#exportProductsBtn"),
   products: document.querySelector("#products"),
   orderCount: document.querySelector("#orderCount"),
   pendingAmount: document.querySelector("#pendingAmount"),
@@ -567,6 +568,25 @@ function downloadProductTemplate() {
   downloadText("商品設定範本.csv", "\ufeff商品名稱,單價,每單上限\n手作耳環,680,2\n香氛蠟燭,420,5\n", "text/csv;charset=utf-8");
 }
 
+function exportProductsCsv() {
+  if (!state.products.length) {
+    toast("目前沒有商品可匯出");
+    return;
+  }
+
+  const header = ["商品名稱", "單價", "每單上限"];
+  const rows = state.products.map((product) => [
+    product.name || "",
+    product.price || 0,
+    product.limit || ""
+  ]);
+  const csv = [header, ...rows]
+    .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+    .join("\n");
+  const safeName = (state.exhibitionName || "展覽").replace(/[\\/:*?"<>|]/g, "_");
+  downloadText(`${safeName}商品設定.csv`, `\ufeff${csv}`, "text/csv;charset=utf-8");
+}
+
 function submitOrder() {
   const product = state.products.find((item) => item.id === el.productSelect.value);
   if (!product) return;
@@ -788,6 +808,7 @@ el.openCustomerBtn.addEventListener("click", () => window.open(getCustomerUrl(),
 el.addProductBtn.addEventListener("click", () => openProductDialog());
 el.productFile.addEventListener("change", () => importProducts(el.productFile.files[0]));
 el.downloadTemplateBtn.addEventListener("click", downloadProductTemplate);
+el.exportProductsBtn.addEventListener("click", exportProductsCsv);
 el.saveProductBtn.addEventListener("click", (event) => {
   event.preventDefault();
   saveProductFromDialog();
