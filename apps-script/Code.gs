@@ -59,6 +59,7 @@ function normalizeState_(state) {
     password: state.password || "",
     onsiteCode: state.onsiteCode || "",
     paymentAccount: state.paymentAccount || "",
+    paymentQrImage: state.paymentQrImage || "",
     published: Boolean(state.published),
     products: Array.isArray(state.products) ? state.products : [],
     orders: Array.isArray(state.orders) ? state.orders : []

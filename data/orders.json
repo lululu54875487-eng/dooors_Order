@@ -6,6 +6,7 @@
   "password": "",
   "onsiteCode": "",
   "paymentAccount": "",
+  "paymentQrImage": "",
   "published": false,
   "products": [],
   "orders": []

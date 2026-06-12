@@ -19,6 +19,7 @@ if (-not (Test-Path $DataFile)) {
     password = ""
     onsiteCode = ""
     paymentAccount = ""
+    paymentQrImage = ""
     published = $false
     products = @()
     orders = @()

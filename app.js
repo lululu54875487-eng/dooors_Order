@@ -15,6 +15,7 @@ function createEmptyState() {
     password: "",
     onsiteCode: "",
     paymentAccount: "",
+    paymentQrImage: "",
     published: false,
     products: [...defaultProducts],
     orders: []
@@ -43,6 +44,10 @@ const el = {
   eventPassword: document.querySelector("#eventPassword"),
   onsiteCode: document.querySelector("#onsiteCode"),
   paymentAccount: document.querySelector("#paymentAccount"),
+  paymentQrFile: document.querySelector("#paymentQrFile"),
+  paymentQrPreview: document.querySelector("#paymentQrPreview"),
+  paymentQrImage: document.querySelector("#paymentQrImage"),
+  removePaymentQrBtn: document.querySelector("#removePaymentQrBtn"),
   publishBtn: document.querySelector("#publishBtn"),
   closeBtn: document.querySelector("#closeBtn"),
   resetBtn: document.querySelector("#resetBtn"),
@@ -307,6 +312,7 @@ function render() {
   renderOrders();
   renderTotals();
   renderHeaderImage();
+  renderPaymentQr();
   renderQr(el.customerUrl.value);
   renderRemoteStatus();
 }
@@ -319,6 +325,15 @@ function renderHeaderImage() {
   el.headerPreview.classList.toggle("hidden", !hasImage);
   document.querySelector(".topbar").classList.toggle("has-hero-image", hasImage);
   el.removeHeaderImageBtn.disabled = !hasImage;
+}
+
+function renderPaymentQr() {
+  const hasQr = Boolean(state.paymentQrImage);
+  el.paymentQrPreview.src = hasQr ? state.paymentQrImage : "";
+  el.paymentQrImage.src = hasQr ? state.paymentQrImage : "";
+  el.paymentQrPreview.classList.toggle("hidden", !hasQr);
+  el.paymentQrImage.classList.toggle("hidden", !hasQr);
+  el.removePaymentQrBtn.disabled = !hasQr;
 }
 
 function renderRemoteStatus() {
@@ -441,6 +456,7 @@ function renderCustomer() {
   el.orderPanel.classList.toggle("hidden", !unlocked || !state.published);
   el.successPanel.classList.add("hidden");
   renderHeaderImage();
+  renderPaymentQr();
   renderProductOptions();
   updateCheckout();
 }
@@ -726,6 +742,50 @@ function readCompressedImage(file) {
   });
 }
 
+function readCompressedQrImage(file) {
+  return new Promise((resolve, reject) => {
+    if (!file) {
+      resolve("");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("QR Code 圖片讀取失敗"));
+    reader.onload = () => {
+      const image = new Image();
+      image.onerror = () => reject(new Error("QR Code 圖片格式無法讀取"));
+      image.onload = () => {
+        const maxSize = 520;
+        const ratio = Math.min(maxSize / image.width, maxSize / image.height, 1);
+        const width = Math.max(1, Math.round(image.width * ratio));
+        const height = Math.max(1, Math.round(image.height * ratio));
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const context = canvas.getContext("2d");
+        context.fillStyle = "#ffffff";
+        context.fillRect(0, 0, width, height);
+        context.drawImage(image, 0, 0, width, height);
+
+        let quality = 0.86;
+        let dataUrl = canvas.toDataURL("image/jpeg", quality);
+        while (dataUrl.length > 42000 && quality > 0.5) {
+          quality -= 0.08;
+          dataUrl = canvas.toDataURL("image/jpeg", quality);
+        }
+
+        if (dataUrl.length > 42000) {
+          reject(new Error("QR Code 圖片仍然太大，請換一張較小的圖片"));
+          return;
+        }
+        resolve(dataUrl);
+      };
+      image.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 function renderQr(text) {
   if (!el.qrImage) return;
   el.qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=192x192&data=${encodeURIComponent(text)}`;
@@ -781,6 +841,28 @@ el.onsiteCode.addEventListener("input", () => {
 el.paymentAccount.addEventListener("input", () => {
   state.paymentAccount = el.paymentAccount.value.trim();
   persist();
+});
+
+el.paymentQrFile.addEventListener("change", async () => {
+  const file = el.paymentQrFile.files[0];
+  if (!file) return;
+  try {
+    state.paymentQrImage = await readCompressedQrImage(file);
+    el.paymentQrFile.value = "";
+    render();
+    persist();
+    toast("已更新收款 QR Code");
+  } catch (error) {
+    el.paymentQrFile.value = "";
+    toast(error.message || "QR Code 上傳失敗");
+  }
+});
+
+el.removePaymentQrBtn.addEventListener("click", () => {
+  state.paymentQrImage = "";
+  render();
+  persist();
+  toast("已移除收款 QR Code");
 });
 
 el.publishBtn.addEventListener("click", () => {

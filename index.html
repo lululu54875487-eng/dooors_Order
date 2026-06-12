@@ -70,6 +70,16 @@
             <textarea id="paymentAccount" rows="4" placeholder="例：銀行代碼 000 / 帳號 123456789 / 戶名 王小明&#10;也可填寫：現場可收現金"></textarea>
           </label>
 
+          <div class="field">
+            <span>收款 QR Code</span>
+            <div class="image-upload-row">
+              <input id="paymentQrFile" type="file" accept="image/*">
+              <button class="secondary" id="removePaymentQrBtn" type="button">移除 QR Code</button>
+            </div>
+            <img class="payment-qr-preview hidden" id="paymentQrPreview" alt="收款 QR Code 預覽">
+            <p class="helper">可上傳銀行、行動支付或轉帳 QR Code，客戶送出訂單後會看到。</p>
+          </div>
+
           <div class="actions">
             <button class="primary" id="publishBtn" type="button">發布展覽</button>
             <button class="secondary" id="closeBtn" type="button">關閉下單</button>
@@ -227,6 +237,7 @@
           <div class="payment-card">
             <span>付款資訊</span>
             <pre id="paymentInfo"></pre>
+            <img class="payment-qr-image hidden" id="paymentQrImage" alt="收款 QR Code">
           </div>
           <p class="helper">若已轉帳，請告知現場賣家；賣家按下「已收到款項」後，訂單才算成立。</p>
         </div>
