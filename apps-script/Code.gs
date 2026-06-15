@@ -70,8 +70,12 @@ function setState_(state) {
   const stateSheet = getStateSheet_();
   stateSheet.getRange("A1").setValue(JSON.stringify(next));
   stateSheet.getRange("A2").setValue(new Date());
-  stateSheet.getRange("A3").setValue(getOrderSheetName_(next));
-  writeOrders_(getOrderSheet_(next), next.orders);
+  if (next.published) {
+    stateSheet.getRange("A3").setValue(getOrderSheetName_(next));
+    writeOrders_(getOrderSheet_(next), next.orders);
+  } else {
+    stateSheet.getRange("A3").setValue("");
+  }
 }
 
 function writeOrders_(sheet, orders) {

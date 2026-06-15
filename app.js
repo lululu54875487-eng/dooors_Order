@@ -1,6 +1,6 @@
 const STORAGE_KEY = "exhibition-order-state";
 const GAS_URL_KEY = "exhibition-order-gas-url";
-const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbzPfIdE2OrVtQAr0UabiqYOyVErvrBYkzsEdMS91Tnlbt9wbWGUOAEIOR_zSb12u4uU/exec";
+const DEFAULT_GAS_URL = "";
 
 const defaultProducts = [
   { id: "sample-1", name: "範例商品 A", price: 680, limit: 2 },
@@ -29,6 +29,8 @@ let remoteSaveTimer = null;
 let remoteKind = "none";
 let gasUrl = new URLSearchParams(location.search).get("sync") || localStorage.getItem(GAS_URL_KEY) || DEFAULT_GAS_URL;
 let editingProductId = null;
+let editingOrderId = null;
+let lastSubmittedOrderId = null;
 
 const el = {
   modeStatus: document.querySelector("#modeStatus"),
@@ -89,6 +91,7 @@ const el = {
   note: document.querySelector("#note"),
   successMessage: document.querySelector("#successMessage"),
   paymentInfo: document.querySelector("#paymentInfo"),
+  editLastOrderBtn: document.querySelector("#editLastOrderBtn"),
   productDialog: document.querySelector("#productDialog"),
   productDialogTitle: document.querySelector("#productDialogTitle"),
   productName: document.querySelector("#productName"),
@@ -421,11 +424,12 @@ function renderOrders() {
         <div class="row-actions">
           <span class="order-status">${order.status === "paid" ? "已成立" : "待收款"}</span>
           <button class="primary" type="button" data-action="paid" ${order.status === "paid" ? "disabled" : ""}>已收到款項</button>
-          <button class="delete-order" type="button" data-action="delete" title="刪除" aria-label="刪除">×</button>
+          <button class="secondary danger-order" type="button" data-action="delete">刪除訂單</button>
         </div>
       `;
       node.querySelector('[data-action="paid"]').addEventListener("click", () => markOrderPaid(order.id));
       node.querySelector('[data-action="delete"]').addEventListener("click", () => {
+        if (!confirm("確定要刪除這筆訂單？")) return;
         state.orders = state.orders.filter((item) => item.id !== order.id);
         render();
         persist();
@@ -459,8 +463,11 @@ function renderCustomer() {
   el.customerTitle.textContent = state.exhibitionName || "填寫訂單";
   const eventLabel = [state.exhibitionName || "本次展覽", state.exhibitionDate ? formatDisplayDate(state.exhibitionDate) : ""].filter(Boolean).join(" · ");
   el.customerHint.textContent = state.published ? `${eventLabel} 開放下單中` : "目前尚未開放下單";
-  el.orderPanel.classList.toggle("hidden", !state.published);
-  el.successPanel.classList.add("hidden");
+  const showingSuccess = !el.successPanel.classList.contains("hidden");
+  el.orderPanel.classList.toggle("hidden", !state.published || showingSuccess);
+  if (!showingSuccess) {
+    el.successPanel.classList.add("hidden");
+  }
   renderHeaderImage();
   renderPaymentQr();
 }
@@ -633,8 +640,9 @@ function submitOrder() {
     return;
   }
 
+  const existingOrder = state.orders.find((order) => order.id === editingOrderId);
   const order = {
-    id: createId(),
+    id: editingOrderId || createId(),
     eventId: state.eventId,
     orderNumber: el.customerOrderNumber.value.trim(),
     nickname: el.nickname.value.trim(),
@@ -649,12 +657,14 @@ function submitOrder() {
     paymentMethod: el.paymentMethod.value,
     onsiteVerified: true,
     note: el.note.value.trim(),
-    status: "pending",
-    createdAt: new Date().toISOString(),
-    paidAt: ""
+    status: existingOrder?.status || "pending",
+    createdAt: existingOrder?.createdAt || new Date().toISOString(),
+    paidAt: existingOrder?.paidAt || ""
   };
 
-  state.orders = [...state.orders, order];
+  state.orders = upsertOrder(state.orders, order);
+  editingOrderId = null;
+  lastSubmittedOrderId = order.id;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   saveRemoteOrder(order);
   el.orderForm.reset();
@@ -662,6 +672,36 @@ function submitOrder() {
   el.paymentInfo.textContent = state.paymentAccount || "現場可洽賣家付款。";
   el.orderPanel.classList.add("hidden");
   el.successPanel.classList.remove("hidden");
+}
+
+function upsertOrder(orders, order) {
+  const exists = orders.some((item) => item.id === order.id);
+  if (exists) {
+    return orders.map((item) => (item.id === order.id ? order : item));
+  }
+  return [...orders, order];
+}
+
+function editLastSubmittedOrder() {
+  const order = state.orders.find((item) => item.id === lastSubmittedOrderId);
+  if (!order || order.status === "paid") {
+    toast("這筆訂單已無法修改，請洽現場賣家");
+    return;
+  }
+
+  editingOrderId = order.id;
+  el.customerOrderNumber.value = order.orderNumber || "";
+  el.nickname.value = order.nickname || "";
+  el.recipientName.value = order.recipientName || "";
+  el.recipientPhone.value = order.phone || "";
+  el.recipientAddress.value = order.address || "";
+  el.orderAmount.value = order.total || "";
+  el.paymentMethod.value = order.paymentMethod || "transfer";
+  el.orderOnsiteCode.value = state.onsiteCode || "";
+  el.note.value = order.note || "";
+  el.successPanel.classList.add("hidden");
+  el.orderPanel.classList.remove("hidden");
+  toast("可以修改剛送出的訂單");
 }
 
 function markOrderPaid(orderId) {
@@ -933,6 +973,7 @@ el.orderForm.addEventListener("submit", (event) => {
   event.preventDefault();
   submitOrder();
 });
+el.editLastOrderBtn.addEventListener("click", editLastSubmittedOrder);
 
 render();
 if (gasUrl) {

@@ -515,6 +515,10 @@ button:disabled {
   background: #fff;
 }
 
+.danger-order {
+  color: #8f3e4a;
+}
+
 .order-status {
   color: var(--muted);
   font-size: 0.86rem;
