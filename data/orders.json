@@ -8,6 +8,7 @@
   "paymentAccount": "",
   "paymentQrImage": "",
   "published": false,
+  "productsCollapsed": false,
   "products": [],
   "orders": []
 }

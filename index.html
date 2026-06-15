@@ -119,17 +119,22 @@
               <h2>商品與限制</h2>
               <p>可上傳 CSV，欄位：商品名稱, 單價, 每單上限</p>
             </div>
-            <button class="icon-button" id="addProductBtn" type="button" title="新增商品" aria-label="新增商品">＋</button>
+            <div class="panel-tools">
+              <button class="icon-button" id="toggleProductsBtn" type="button" title="收合商品設定" aria-label="收合商品設定">⌃</button>
+              <button class="icon-button" id="addProductBtn" type="button" title="新增商品" aria-label="新增商品">＋</button>
+            </div>
           </div>
 
-          <div class="upload-row">
-            <input id="productFile" type="file" accept=".csv,text/csv">
-            <button class="secondary" id="downloadTemplateBtn" type="button">下載範本</button>
-            <button class="secondary" id="exportProductsBtn" type="button">匯出商品設定</button>
-          </div>
-          <p class="helper">商品會自動暫存在瀏覽器；也可以匯出成 Excel 可開啟的 CSV，改好後再匯入。</p>
+          <div class="collapsible-content" id="productSettingsBody">
+            <div class="upload-row">
+              <input id="productFile" type="file" accept=".csv,text/csv">
+              <button class="secondary" id="downloadTemplateBtn" type="button">下載範本</button>
+              <button class="secondary" id="exportProductsBtn" type="button">匯出商品設定</button>
+            </div>
+            <p class="helper">商品會自動暫存在瀏覽器；也可以匯出成 Excel 可開啟的 CSV，改好後再匯入。</p>
 
-          <div class="products" id="products"></div>
+            <div class="products" id="products"></div>
+          </div>
         </div>
       </section>
 
@@ -186,6 +191,14 @@
           </div>
           <form id="orderForm">
             <div class="form-grid">
+              <label class="field">
+                <span>訂單號碼</span>
+                <input id="customerOrderNumber" type="text" placeholder="例：A001" required>
+              </label>
+              <label class="field">
+                <span>暱稱</span>
+                <input id="nickname" type="text" required>
+              </label>
               <label class="field">
                 <span>收件人姓名</span>
                 <input id="recipientName" type="text" required>

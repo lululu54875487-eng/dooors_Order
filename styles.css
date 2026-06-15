@@ -351,11 +351,16 @@ textarea:focus {
 
 .actions,
 .upload-row,
-.row-actions {
+.row-actions,
+.panel-tools {
   display: flex;
   flex-wrap: wrap;
   gap: 9px;
   align-items: center;
+}
+
+.panel-tools {
+  flex-wrap: nowrap;
 }
 
 button {

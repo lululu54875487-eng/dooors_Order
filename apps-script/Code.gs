@@ -61,6 +61,7 @@ function normalizeState_(state) {
     paymentAccount: state.paymentAccount || "",
     paymentQrImage: state.paymentQrImage || "",
     published: Boolean(state.published),
+    productsCollapsed: Boolean(state.productsCollapsed),
     products: Array.isArray(state.products) ? state.products : [],
     orders: Array.isArray(state.orders) ? state.orders : []
   };
@@ -77,7 +78,7 @@ function setState_(state) {
 
 function writeOrders_(sheet, orders) {
   const startRow = 4;
-  const header = [["訂單狀態", "收件人", "手機", "地址", "商品", "單價", "數量", "金額", "付款方式", "備註", "下單時間", "收款時間"]];
+  const header = [["訂單狀態", "訂單號碼", "暱稱", "收件人", "手機", "地址", "商品", "單價", "數量", "金額", "付款方式", "備註", "下單時間", "收款時間"]];
   sheet.getRange(startRow, 1, 1, header[0].length).setValues(header);
 
   const lastRow = Math.max(sheet.getLastRow(), startRow + 1);
@@ -87,6 +88,8 @@ function writeOrders_(sheet, orders) {
 
   const rows = orders.map((order) => [
     order.status === "paid" ? "已成立" : "待收款",
+    order.orderNumber || "",
+    order.nickname || "",
     order.recipientName || "",
     order.phone || "",
     order.address || "",

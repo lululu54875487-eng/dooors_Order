@@ -17,6 +17,7 @@ function createEmptyState() {
     paymentAccount: "",
     paymentQrImage: "",
     published: false,
+    productsCollapsed: false,
     products: [...defaultProducts],
     orders: []
   };
@@ -59,6 +60,8 @@ const el = {
   copyUrlBtn: document.querySelector("#copyUrlBtn"),
   openCustomerBtn: document.querySelector("#openCustomerBtn"),
   qrImage: document.querySelector("#qrImage"),
+  toggleProductsBtn: document.querySelector("#toggleProductsBtn"),
+  productSettingsBody: document.querySelector("#productSettingsBody"),
   addProductBtn: document.querySelector("#addProductBtn"),
   productFile: document.querySelector("#productFile"),
   downloadTemplateBtn: document.querySelector("#downloadTemplateBtn"),
@@ -78,6 +81,8 @@ const el = {
   passwordForm: document.querySelector("#passwordForm"),
   passwordInput: document.querySelector("#passwordInput"),
   orderForm: document.querySelector("#orderForm"),
+  customerOrderNumber: document.querySelector("#customerOrderNumber"),
+  nickname: document.querySelector("#nickname"),
   recipientName: document.querySelector("#recipientName"),
   recipientPhone: document.querySelector("#recipientPhone"),
   recipientAddress: document.querySelector("#recipientAddress"),
@@ -305,16 +310,26 @@ function render() {
   el.paymentAccount.value = state.paymentAccount;
   el.gasUrl.value = gasUrl;
   el.customerUrl.value = getCustomerUrl();
-  el.publishBtn.disabled = !state.exhibitionName.trim() || !state.password.trim() || !state.onsiteCode.trim() || !state.products.length;
+  el.publishBtn.disabled = !state.exhibitionName.trim() || !state.password.trim() || !state.onsiteCode.trim();
   el.closeBtn.disabled = !state.published;
 
   renderProducts();
+  renderProductPanelState();
   renderOrders();
   renderTotals();
   renderHeaderImage();
   renderPaymentQr();
   renderQr(el.customerUrl.value);
   renderRemoteStatus();
+}
+
+function renderProductPanelState() {
+  const collapsed = Boolean(state.productsCollapsed);
+  el.productSettingsBody.classList.toggle("hidden", collapsed);
+  el.toggleProductsBtn.textContent = collapsed ? "⌄" : "⌃";
+  el.toggleProductsBtn.title = collapsed ? "展開商品設定" : "收合商品設定";
+  el.toggleProductsBtn.setAttribute("aria-label", collapsed ? "展開商品設定" : "收合商品設定");
+  el.toggleProductsBtn.setAttribute("aria-expanded", String(!collapsed));
 }
 
 function renderHeaderImage() {
@@ -402,8 +417,8 @@ function renderOrders() {
       node.className = `order-row ${order.status === "paid" ? "paid" : ""}`;
       node.innerHTML = `
         <div>
-          <strong>${escapeHtml(order.recipientName)} · ${escapeHtml(order.productName)} × ${order.quantity}</strong>
-          <small>${formatMoney(order.total)} · ${order.paymentMethod === "cash" ? "現金" : "轉帳"} · ${escapeHtml(order.phone)} · ${escapeHtml(order.address)}</small>
+          <strong>${escapeHtml(order.orderNumber || "未填號碼")} · ${escapeHtml(order.nickname || "未填暱稱")} · ${escapeHtml(order.productName)} × ${order.quantity}</strong>
+          <small>${escapeHtml(order.recipientName)} · ${formatMoney(order.total)} · ${order.paymentMethod === "cash" ? "現金" : "轉帳"} · ${escapeHtml(order.phone)} · ${escapeHtml(order.address)}</small>
           ${order.note ? `<small>備註：${escapeHtml(order.note)}</small>` : ""}
         </div>
         <div class="row-actions">
@@ -463,6 +478,13 @@ function renderCustomer() {
 
 function renderProductOptions() {
   el.productSelect.innerHTML = "";
+  if (!state.products.length) {
+    const option = document.createElement("option");
+    option.value = "__none__";
+    option.textContent = "未設定商品";
+    el.productSelect.append(option);
+    return;
+  }
   state.products.forEach((product) => {
     const option = document.createElement("option");
     option.value = product.id;
@@ -486,6 +508,8 @@ function updateCheckout() {
   const product = state.products.find((item) => item.id === el.productSelect.value) || state.products[0];
   if (!product) {
     el.checkoutTotal.textContent = "$0";
+    el.quantity.value = 1;
+    el.quantity.removeAttribute("max");
     return;
   }
   if (product.limit) {
@@ -612,8 +636,12 @@ function exportProductsCsv() {
 }
 
 function submitOrder() {
-  const product = state.products.find((item) => item.id === el.productSelect.value);
-  if (!product) return;
+  const product = state.products.find((item) => item.id === el.productSelect.value) || {
+    id: "",
+    name: "未指定商品",
+    price: 0,
+    limit: ""
+  };
 
   if (el.orderOnsiteCode.value.trim() !== state.onsiteCode) {
     toast("現場驗證碼不正確，請向攤位確認");
@@ -629,6 +657,8 @@ function submitOrder() {
   const order = {
     id: createId(),
     eventId: state.eventId,
+    orderNumber: el.customerOrderNumber.value.trim(),
+    nickname: el.nickname.value.trim(),
     recipientName: el.recipientName.value.trim(),
     phone: el.recipientPhone.value.trim(),
     address: el.recipientAddress.value.trim(),
@@ -666,9 +696,11 @@ function markOrderPaid(orderId) {
 }
 
 function exportExcel() {
-  const header = ["訂單狀態", "收件人", "手機", "地址", "商品", "單價", "數量", "金額", "付款方式", "備註", "下單時間", "收款時間"];
+  const header = ["訂單狀態", "訂單號碼", "暱稱", "收件人", "手機", "地址", "商品", "單價", "數量", "金額", "付款方式", "備註", "下單時間", "收款時間"];
   const rows = state.orders.map((order) => [
     order.status === "paid" ? "已成立" : "待收款",
+    order.orderNumber || "",
+    order.nickname || "",
     order.recipientName,
     order.phone,
     order.address,
@@ -908,6 +940,11 @@ el.clearGasBtn.addEventListener("click", () => {
 
 el.copyUrlBtn.addEventListener("click", () => copyText(getCustomerUrl()));
 el.openCustomerBtn.addEventListener("click", () => window.open(getCustomerUrl(), "_blank", "noopener"));
+el.toggleProductsBtn.addEventListener("click", () => {
+  state.productsCollapsed = !state.productsCollapsed;
+  render();
+  persist();
+});
 el.addProductBtn.addEventListener("click", () => openProductDialog());
 el.productFile.addEventListener("change", () => importProducts(el.productFile.files[0]));
 el.downloadTemplateBtn.addEventListener("click", downloadProductTemplate);

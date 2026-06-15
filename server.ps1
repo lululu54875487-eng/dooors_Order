@@ -21,6 +21,7 @@ if (-not (Test-Path $DataFile)) {
     paymentAccount = ""
     paymentQrImage = ""
     published = $false
+    productsCollapsed = $false
     products = @()
     orders = @()
   } | ConvertTo-Json -Depth 20 | Set-Content -Path $DataFile -Encoding UTF8
