@@ -1,5 +1,6 @@
 const STORAGE_KEY = "exhibition-order-state";
 const GAS_URL_KEY = "exhibition-order-gas-url";
+const DEFAULT_GAS_URL = "";
 
 const defaultProducts = [
   { id: "sample-1", name: "範例商品 A", price: 680, limit: 2 },
@@ -26,7 +27,7 @@ let state = loadInitialState();
 let remoteEnabled = false;
 let remoteSaveTimer = null;
 let remoteKind = "none";
-let gasUrl = new URLSearchParams(location.search).get("sync") || localStorage.getItem(GAS_URL_KEY) || "";
+let gasUrl = new URLSearchParams(location.search).get("sync") || localStorage.getItem(GAS_URL_KEY) || DEFAULT_GAS_URL;
 let editingProductId = null;
 
 const el = {
@@ -349,6 +350,8 @@ function renderRemoteStatus() {
     el.remoteStatus.textContent = "已連線 Google Sheets，客戶手機送出的訂單會同步回賣家後台。";
   } else if (remoteEnabled && remoteKind === "local") {
     el.remoteStatus.textContent = "已連線本機伺服器，適合展場同一台電腦測試。";
+  } else if (DEFAULT_GAS_URL && gasUrl === DEFAULT_GAS_URL) {
+    el.remoteStatus.textContent = "已使用程式內建的 Google Apps Script URL，正在嘗試連線。";
   } else if (gasUrl) {
     el.remoteStatus.textContent = "已儲存同步網址，正在嘗試連線。";
   } else {

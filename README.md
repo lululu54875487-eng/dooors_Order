@@ -39,10 +39,13 @@ GitHub Pages 是靜態網站，不能自己接收客戶手機送出的訂單。�
 4. 將檔案最上方的 `SPREADSHEET_ID` 換成你的 Google Sheet ID。
 5. 部署為 Web App，權限選「任何人」可存取。
 6. 複製結尾是 `/exec` 的 Web App URL。
-7. 回到展覽訂單系統後台，貼到 `Google Apps Script Web App URL` 並儲存。
-8. 再複製或列印畫面上的 QR Code 給客戶掃描。
+7. 將 Web App URL 貼到 `app.js` 最上方的 `DEFAULT_GAS_URL`，重新上傳 GitHub Pages。
+8. 回到展覽訂單系統後台確認已連線，之後就不用每次輸入同步網址。
+9. 再複製或列印畫面上的 QR Code 給客戶掃描。
 
 後台產生的客戶網址會自動帶上同步網址，所以客戶手機掃 QR Code 後能讀到同一場展覽設定並送出訂單。
+
+Apps Script 會固定寫入同一份 Google Sheet。系統設定會存在 `State` 分頁；訂單會依 `展覽日期_展覽名稱` 自動建立不同分頁，例如 `2026-06-15_台北手作市集`。
 
 ## 本機預覽
 

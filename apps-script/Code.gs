@@ -1,6 +1,5 @@
 const SPREADSHEET_ID = "1-K1n0-xVvCeQLJl1C1j87lk95NteARijWVk7W_2BrcU";
-const SHEET_NAME = "Orders";
-const PRODUCT_SHEET_NAME = "Products";
+const STATE_SHEET_NAME = "State";
 
 function doGet(e) {
   const action = e.parameter.action || "getState";
@@ -39,7 +38,7 @@ function doPost(e) {
 }
 
 function getState_() {
-  const sheet = getSheet_();
+  const sheet = getStateSheet_();
   const value = sheet.getRange("A1").getValue();
   if (value) {
     return normalizeState_(JSON.parse(value));
@@ -68,16 +67,20 @@ function normalizeState_(state) {
 
 function setState_(state) {
   const next = normalizeState_(state);
-  const sheet = getSheet_();
-  sheet.getRange("A1").setValue(JSON.stringify(next));
-  sheet.getRange("A2").setValue(new Date());
-  writeOrders_(sheet, next.orders);
-  writeProducts_(next.products);
+  const stateSheet = getStateSheet_();
+  stateSheet.getRange("A1").setValue(JSON.stringify(next));
+  stateSheet.getRange("A2").setValue(new Date());
+  stateSheet.getRange("A3").setValue(getOrderSheetName_(next));
+  writeOrders_(getOrderSheet_(next), next.orders);
 }
 
 function writeOrders_(sheet, orders) {
   const startRow = 4;
   const header = [["訂單狀態", "訂單號碼", "暱稱", "收件人", "手機", "地址", "訂單金額", "付款方式", "備註", "下單時間", "收款時間"]];
+  sheet.getRange(1, 1).setValue("展覽名稱");
+  sheet.getRange(1, 2).setValue(sheet.getName());
+  sheet.getRange(2, 1).setValue("最後更新");
+  sheet.getRange(2, 2).setValue(new Date());
   sheet.getRange(startRow, 1, 1, header[0].length).setValues(header);
 
   const lastRow = Math.max(sheet.getLastRow(), startRow + 1);
@@ -101,26 +104,29 @@ function writeOrders_(sheet, orders) {
   sheet.getRange(startRow + 1, 1, rows.length, header[0].length).setValues(rows);
 }
 
-function writeProducts_(products) {
+function getStateSheet_() {
   const spreadsheet = getSpreadsheet_();
-  const sheet = spreadsheet.getSheetByName(PRODUCT_SHEET_NAME) || spreadsheet.insertSheet(PRODUCT_SHEET_NAME);
-  const header = [["商品名稱", "單價", "每單上限"]];
-  sheet.clearContents();
-  sheet.getRange(1, 1, 1, header[0].length).setValues(header);
-
-  if (!products.length) return;
-
-  const rows = products.map((product) => [
-    product.name || "",
-    product.price || "",
-    product.limit || ""
-  ]);
-  sheet.getRange(2, 1, rows.length, header[0].length).setValues(rows);
+  return spreadsheet.getSheetByName(STATE_SHEET_NAME) || spreadsheet.insertSheet(STATE_SHEET_NAME);
 }
 
-function getSheet_() {
+function getOrderSheet_(state) {
   const spreadsheet = getSpreadsheet_();
-  return spreadsheet.getSheetByName(SHEET_NAME) || spreadsheet.insertSheet(SHEET_NAME);
+  const name = getOrderSheetName_(state);
+  return spreadsheet.getSheetByName(name) || spreadsheet.insertSheet(name);
+}
+
+function getOrderSheetName_(state) {
+  const date = state.exhibitionDate || "未設定日期";
+  const name = state.exhibitionName || "未命名展覽";
+  return sanitizeSheetName_(`${date}_${name}`);
+}
+
+function sanitizeSheetName_(name) {
+  const cleaned = String(name)
+    .replace(/[\[\]\:\*\?\/\\]/g, "_")
+    .replace(/\s+/g, " ")
+    .trim() || "未命名展覽";
+  return cleaned.slice(0, 100);
 }
 
 function getSpreadsheet_() {
