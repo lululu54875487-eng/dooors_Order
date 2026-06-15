@@ -81,12 +81,10 @@ const el = {
   recipientName: document.querySelector("#recipientName"),
   recipientPhone: document.querySelector("#recipientPhone"),
   recipientAddress: document.querySelector("#recipientAddress"),
-  productSelect: document.querySelector("#productSelect"),
-  quantity: document.querySelector("#quantity"),
+  orderAmount: document.querySelector("#orderAmount"),
   paymentMethod: document.querySelector("#paymentMethod"),
   orderOnsiteCode: document.querySelector("#orderOnsiteCode"),
   note: document.querySelector("#note"),
-  checkoutTotal: document.querySelector("#checkoutTotal"),
   successMessage: document.querySelector("#successMessage"),
   paymentInfo: document.querySelector("#paymentInfo"),
   productDialog: document.querySelector("#productDialog"),
@@ -411,8 +409,8 @@ function renderOrders() {
       node.className = `order-row ${order.status === "paid" ? "paid" : ""}`;
       node.innerHTML = `
         <div>
-          <strong>${escapeHtml(order.orderNumber || "未填號碼")} · ${escapeHtml(order.nickname || "未填暱稱")} · ${escapeHtml(order.productName)} × ${order.quantity}</strong>
-          <small>${escapeHtml(order.recipientName)} · ${formatMoney(order.total)} · ${order.paymentMethod === "cash" ? "現金" : "轉帳"} · ${escapeHtml(order.phone)} · ${escapeHtml(order.address)}</small>
+          <strong>${escapeHtml(order.orderNumber || "未填號碼")} · ${escapeHtml(order.nickname || "未填暱稱")} · ${formatMoney(order.total)}</strong>
+          <small>${escapeHtml(order.recipientName)} · ${order.paymentMethod === "cash" ? "現金" : "轉帳"} · ${escapeHtml(order.phone)} · ${escapeHtml(order.address)}</small>
           ${order.note ? `<small>備註：${escapeHtml(order.note)}</small>` : ""}
         </div>
         <div class="row-actions">
@@ -432,28 +430,24 @@ function renderOrders() {
 }
 
 function renderTotals() {
-  const totals = new Map();
-  state.orders
-    .filter((order) => order.status === "paid")
-    .forEach((order) => {
-      const current = totals.get(order.productName) || { quantity: 0, amount: 0 };
-      current.quantity += Number(order.quantity || 0);
-      current.amount += Number(order.total || 0);
-      totals.set(order.productName, current);
-    });
+  const paidOrders = state.orders.filter((order) => order.status === "paid");
+  const totalAmount = paidOrders.reduce((sum, order) => sum + Number(order.total || 0), 0);
 
   el.totals.innerHTML = "";
-  if (!totals.size) {
+  if (!paidOrders.length) {
     el.totals.innerHTML = '<div class="empty">尚無成立訂單。</div>';
     return;
   }
 
-  [...totals.entries()].forEach(([name, item]) => {
-    const row = document.createElement("div");
-    row.className = "total-row";
-    row.innerHTML = `<span>${escapeHtml(name)} × ${item.quantity}</span><strong>${formatMoney(item.amount)}</strong>`;
-    el.totals.append(row);
-  });
+  const countRow = document.createElement("div");
+  countRow.className = "total-row";
+  countRow.innerHTML = `<span>成立訂單數</span><strong>${paidOrders.length}</strong>`;
+  el.totals.append(countRow);
+
+  const amountRow = document.createElement("div");
+  amountRow.className = "total-row";
+  amountRow.innerHTML = `<span>成立訂單金額</span><strong>${formatMoney(totalAmount)}</strong>`;
+  el.totals.append(amountRow);
 }
 
 function renderCustomer() {
@@ -464,8 +458,6 @@ function renderCustomer() {
   el.successPanel.classList.add("hidden");
   renderHeaderImage();
   renderPaymentQr();
-  renderProductOptions();
-  updateCheckout();
 }
 
 function renderProductOptions() {
@@ -497,6 +489,7 @@ function formatDisplayDate(value) {
 }
 
 function updateCheckout() {
+  if (!el.productSelect || !el.checkoutTotal || !el.quantity) return;
   const product = state.products.find((item) => item.id === el.productSelect.value) || state.products[0];
   if (!product) {
     el.checkoutTotal.textContent = "$0";
@@ -624,21 +617,14 @@ function exportProductsCsv() {
 }
 
 function submitOrder() {
-  const product = state.products.find((item) => item.id === el.productSelect.value) || {
-    id: "",
-    name: "未指定商品",
-    price: 0,
-    limit: ""
-  };
-
   if (el.orderOnsiteCode.value.trim() !== state.onsiteCode) {
     toast("現場驗證碼不正確，請向攤位確認");
     return;
   }
 
-  const quantity = Number(el.quantity.value) || 1;
-  if (product.limit && quantity > Number(product.limit)) {
-    toast(`此商品每單最多 ${product.limit} 件`);
+  const amount = Number(el.orderAmount.value) || 0;
+  if (amount <= 0) {
+    toast("請輸入訂單金額");
     return;
   }
 
@@ -650,11 +636,11 @@ function submitOrder() {
     recipientName: el.recipientName.value.trim(),
     phone: el.recipientPhone.value.trim(),
     address: el.recipientAddress.value.trim(),
-    productId: product.id,
-    productName: product.name,
-    price: Number(product.price || 0),
-    quantity,
-    total: Number(product.price || 0) * quantity,
+    productId: "",
+    productName: "自填金額",
+    price: amount,
+    quantity: 1,
+    total: amount,
     paymentMethod: el.paymentMethod.value,
     onsiteVerified: true,
     note: el.note.value.trim(),
@@ -667,8 +653,7 @@ function submitOrder() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   saveRemoteOrder(order);
   el.orderForm.reset();
-  el.quantity.value = 1;
-  el.successMessage.textContent = `${order.productName} × ${order.quantity}，金額 ${formatMoney(order.total)}。`;
+  el.successMessage.textContent = `訂單金額 ${formatMoney(order.total)}。`;
   el.paymentInfo.textContent = state.paymentAccount || "現場可洽賣家付款。";
   el.orderPanel.classList.add("hidden");
   el.successPanel.classList.remove("hidden");
@@ -684,7 +669,7 @@ function markOrderPaid(orderId) {
 }
 
 function exportExcel() {
-  const header = ["訂單狀態", "訂單號碼", "暱稱", "收件人", "手機", "地址", "商品", "單價", "數量", "金額", "付款方式", "備註", "下單時間", "收款時間"];
+  const header = ["訂單狀態", "訂單號碼", "暱稱", "收件人", "手機", "地址", "訂單金額", "付款方式", "備註", "下單時間", "收款時間"];
   const rows = state.orders.map((order) => [
     order.status === "paid" ? "已成立" : "待收款",
     order.orderNumber || "",
@@ -692,9 +677,6 @@ function exportExcel() {
     order.recipientName,
     order.phone,
     order.address,
-    order.productName,
-    order.price,
-    order.quantity,
     order.total,
     order.paymentMethod === "cash" ? "現金" : "轉帳",
     order.note || "",
@@ -936,8 +918,8 @@ el.saveProductBtn.addEventListener("click", (event) => {
 });
 el.exportBtn.addEventListener("click", exportExcel);
 
-el.productSelect.addEventListener("change", updateCheckout);
-el.quantity.addEventListener("input", updateCheckout);
+if (el.productSelect) el.productSelect.addEventListener("change", updateCheckout);
+if (el.quantity) el.quantity.addEventListener("input", updateCheckout);
 el.orderForm.addEventListener("submit", (event) => {
   event.preventDefault();
   submitOrder();

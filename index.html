@@ -24,7 +24,7 @@
     </header>
 
     <main class="app-shell">
-      <section class="workspace" id="adminView">
+      <section class="workspace setup-only" id="adminView">
         <div class="panel setup-panel">
           <div class="panel-heading">
             <div>
@@ -108,7 +108,7 @@
           </div>
         </div>
 
-        <div class="panel product-panel">
+        <div class="panel product-panel hidden">
           <div class="panel-heading">
             <div>
               <h2>商品與限制</h2>
@@ -153,7 +153,7 @@
           <div class="panel-heading">
             <div>
               <h2>商品彙總</h2>
-              <p>只計算已收到款項的成立訂單</p>
+              <p>只計算已收到款項的成立訂單金額</p>
             </div>
           </div>
           <div class="totals" id="totals"></div>
@@ -191,12 +191,8 @@
                 <input id="recipientAddress" type="text" required>
               </label>
               <label class="field">
-                <span>商品</span>
-                <select id="productSelect" required></select>
-              </label>
-              <label class="field compact">
-                <span>數量</span>
-                <input id="quantity" type="number" min="1" value="1" required>
+                <span>訂單金額</span>
+                <input id="orderAmount" type="number" min="0" step="1" placeholder="請輸入本次訂單金額" required>
               </label>
               <label class="field">
                 <span>付款方式</span>
@@ -213,10 +209,6 @@
                 <span>備註</span>
                 <input id="note" type="text" placeholder="尺寸、顏色、希望到貨時間等">
               </label>
-            </div>
-            <div class="checkout-box">
-              <span>訂單金額</span>
-              <strong id="checkoutTotal">$0</strong>
             </div>
             <button class="primary full" type="submit">提交訂單</button>
           </form>

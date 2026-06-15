@@ -251,6 +251,10 @@ h2 {
   align-items: start;
 }
 
+.workspace.setup-only {
+  grid-template-columns: minmax(300px, 540px);
+}
+
 .workspace.lower {
   margin-top: 18px;
   grid-template-columns: minmax(360px, 1fr) minmax(320px, 0.72fr);

@@ -77,7 +77,7 @@ function setState_(state) {
 
 function writeOrders_(sheet, orders) {
   const startRow = 4;
-  const header = [["訂單狀態", "訂單號碼", "暱稱", "收件人", "手機", "地址", "商品", "單價", "數量", "金額", "付款方式", "備註", "下單時間", "收款時間"]];
+  const header = [["訂單狀態", "訂單號碼", "暱稱", "收件人", "手機", "地址", "訂單金額", "付款方式", "備註", "下單時間", "收款時間"]];
   sheet.getRange(startRow, 1, 1, header[0].length).setValues(header);
 
   const lastRow = Math.max(sheet.getLastRow(), startRow + 1);
@@ -92,9 +92,6 @@ function writeOrders_(sheet, orders) {
     order.recipientName || "",
     order.phone || "",
     order.address || "",
-    order.productName || "",
-    order.price || "",
-    order.quantity || "",
     order.total || "",
     order.paymentMethod === "cash" ? "現金" : "轉帳",
     order.note || "",
