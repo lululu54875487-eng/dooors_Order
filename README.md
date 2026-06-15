@@ -47,6 +47,8 @@ GitHub Pages 是靜態網站，不能自己接收客戶手機送出的訂單。�
 
 Apps Script 會固定寫入同一份 Google Sheet。系統設定會存在 `State` 分頁；訂單會依 `展覽日期_展覽名稱` 自動建立不同分頁，例如 `2026-06-15_台北手作市集`。
 
+如果 `app.js` 的 `DEFAULT_GAS_URL` 已填入網址，後台會自動隱藏 `Google Apps Script Web App URL` 欄位；只有沒有設定預設網址時才會顯示手動輸入欄位。
+
 ## 本機預覽
 
 ```powershell

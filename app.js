@@ -1,6 +1,6 @@
 const STORAGE_KEY = "exhibition-order-state";
 const GAS_URL_KEY = "exhibition-order-gas-url";
-const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbzPfIdE2OrVtQAr0UabiqYOyVErvrBYkzsEdMS91Tnlbt9wbWGUOAEIOR_zSb12u4uU/exec";
+const DEFAULT_GAS_URL = "";
 
 const defaultProducts = [
   { id: "sample-1", name: "範例商品 A", price: 680, limit: 2 },
@@ -51,6 +51,7 @@ const el = {
   publishBtn: document.querySelector("#publishBtn"),
   closeBtn: document.querySelector("#closeBtn"),
   resetBtn: document.querySelector("#resetBtn"),
+  gasSettingsBox: document.querySelector("#gasSettingsBox"),
   gasUrl: document.querySelector("#gasUrl"),
   saveGasBtn: document.querySelector("#saveGasBtn"),
   clearGasBtn: document.querySelector("#clearGasBtn"),
@@ -301,6 +302,7 @@ function render() {
   el.exhibitionDate.value = state.exhibitionDate || "";
   el.onsiteCode.value = state.onsiteCode || "";
   el.paymentAccount.value = state.paymentAccount;
+  el.gasSettingsBox.classList.toggle("hidden", Boolean(DEFAULT_GAS_URL));
   el.gasUrl.value = gasUrl;
   el.customerUrl.value = getCustomerUrl();
   el.publishBtn.disabled = !state.exhibitionName.trim() || !state.onsiteCode.trim();
@@ -896,12 +898,16 @@ el.saveGasBtn.addEventListener("click", () => {
 });
 
 el.clearGasBtn.addEventListener("click", () => {
-  gasUrl = "";
+  gasUrl = DEFAULT_GAS_URL;
   localStorage.removeItem(GAS_URL_KEY);
-  remoteEnabled = false;
-  remoteKind = "none";
+  remoteEnabled = Boolean(gasUrl);
+  remoteKind = gasUrl ? "gas" : "none";
   renderRemoteStatus();
   toast("已清除同步網址");
+  if (gasUrl) {
+    saveRemoteState();
+    window.setTimeout(syncRemoteState, 800);
+  }
 });
 
 el.copyUrlBtn.addEventListener("click", () => copyText(getCustomerUrl()));
