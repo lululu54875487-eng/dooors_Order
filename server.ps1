@@ -16,7 +16,6 @@ if (-not (Test-Path $DataFile)) {
     exhibitionName = ""
     exhibitionDate = ""
     headerImage = ""
-    password = ""
     onsiteCode = ""
     paymentAccount = ""
     paymentQrImage = ""

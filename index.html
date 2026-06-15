@@ -55,14 +55,9 @@
           </div>
 
           <label class="field">
-            <span>本次展覽密碼</span>
-            <input id="eventPassword" type="text" placeholder="當天公布給客戶輸入">
-          </label>
-
-          <label class="field">
             <span>現場驗證碼</span>
             <input id="onsiteCode" type="text" placeholder="例：攤位現場公布的 4 碼口令">
-            <small class="field-note">客戶下單時必填；若擔心轉傳，可中途更換展覽密碼或現場驗證碼。</small>
+            <small class="field-note">客戶送出訂單時必填；若擔心轉傳，可中途更換現場驗證碼。</small>
           </label>
 
           <label class="field">
@@ -166,26 +161,10 @@
       </section>
 
       <section class="customer-shell hidden" id="customerView">
-        <div class="panel customer-panel" id="passwordPanel">
+        <div class="panel customer-panel" id="orderPanel">
           <div class="panel-heading">
             <div>
-              <h2 id="customerTitle">展覽下單</h2>
-              <p>請輸入現場公布的密碼</p>
-            </div>
-          </div>
-          <form id="passwordForm">
-            <label class="field">
-              <span>展覽密碼</span>
-              <input id="passwordInput" type="password" autocomplete="one-time-code" required>
-            </label>
-            <button class="primary full" type="submit">進入下單</button>
-          </form>
-        </div>
-
-        <div class="panel customer-panel hidden" id="orderPanel">
-          <div class="panel-heading">
-            <div>
-              <h2>填寫訂單</h2>
+              <h2 id="customerTitle">填寫訂單</h2>
               <p id="customerHint"></p>
             </div>
           </div>

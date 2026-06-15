@@ -12,7 +12,6 @@ function createEmptyState() {
     exhibitionName: "",
     exhibitionDate: "",
     headerImage: "",
-    password: "",
     onsiteCode: "",
     paymentAccount: "",
     paymentQrImage: "",
@@ -42,7 +41,6 @@ const el = {
   headerPreview: document.querySelector("#headerPreview"),
   heroImage: document.querySelector("#heroImage"),
   removeHeaderImageBtn: document.querySelector("#removeHeaderImageBtn"),
-  eventPassword: document.querySelector("#eventPassword"),
   onsiteCode: document.querySelector("#onsiteCode"),
   paymentAccount: document.querySelector("#paymentAccount"),
   paymentQrFile: document.querySelector("#paymentQrFile"),
@@ -73,13 +71,10 @@ const el = {
   orders: document.querySelector("#orders"),
   totals: document.querySelector("#totals"),
   exportBtn: document.querySelector("#exportBtn"),
-  passwordPanel: document.querySelector("#passwordPanel"),
   orderPanel: document.querySelector("#orderPanel"),
   successPanel: document.querySelector("#successPanel"),
   customerTitle: document.querySelector("#customerTitle"),
   customerHint: document.querySelector("#customerHint"),
-  passwordForm: document.querySelector("#passwordForm"),
-  passwordInput: document.querySelector("#passwordInput"),
   orderForm: document.querySelector("#orderForm"),
   customerOrderNumber: document.querySelector("#customerOrderNumber"),
   nickname: document.querySelector("#nickname"),
@@ -305,12 +300,11 @@ function render() {
   el.setupHint.textContent = state.exhibitionDate ? `展覽日期：${formatDisplayDate(state.exhibitionDate)}` : "可提前完成展覽資訊、商品與收款設定";
   el.exhibitionName.value = state.exhibitionName;
   el.exhibitionDate.value = state.exhibitionDate || "";
-  el.eventPassword.value = state.password;
   el.onsiteCode.value = state.onsiteCode || "";
   el.paymentAccount.value = state.paymentAccount;
   el.gasUrl.value = gasUrl;
   el.customerUrl.value = getCustomerUrl();
-  el.publishBtn.disabled = !state.exhibitionName.trim() || !state.password.trim() || !state.onsiteCode.trim();
+  el.publishBtn.disabled = !state.exhibitionName.trim() || !state.onsiteCode.trim();
   el.closeBtn.disabled = !state.published;
 
   renderProducts();
@@ -463,12 +457,10 @@ function renderTotals() {
 }
 
 function renderCustomer() {
-  el.customerTitle.textContent = state.exhibitionName || "展覽下單";
+  el.customerTitle.textContent = state.exhibitionName || "填寫訂單";
   const eventLabel = [state.exhibitionName || "本次展覽", state.exhibitionDate ? formatDisplayDate(state.exhibitionDate) : ""].filter(Boolean).join(" · ");
   el.customerHint.textContent = state.published ? `${eventLabel} 開放下單中` : "目前尚未開放下單";
-  const unlocked = sessionStorage.getItem(getPasswordSessionKey()) === state.password;
-  el.passwordPanel.classList.toggle("hidden", unlocked);
-  el.orderPanel.classList.toggle("hidden", !unlocked || !state.published);
+  el.orderPanel.classList.toggle("hidden", !state.published);
   el.successPanel.classList.add("hidden");
   renderHeaderImage();
   renderPaymentQr();
@@ -519,10 +511,6 @@ function updateCheckout() {
   }
   const quantity = Math.max(1, Number(el.quantity.value) || 1);
   el.checkoutTotal.textContent = formatMoney(Number(product.price || 0) * quantity);
-}
-
-function getPasswordSessionKey() {
-  return `order-unlocked-${state.eventId}`;
 }
 
 function openProductDialog(product = null) {
@@ -857,13 +845,6 @@ el.removeHeaderImageBtn.addEventListener("click", () => {
   toast("已移除頁首圖片");
 });
 
-el.eventPassword.addEventListener("input", () => {
-  state.password = el.eventPassword.value.trim();
-  sessionStorage.removeItem(getPasswordSessionKey());
-  render();
-  persist();
-});
-
 el.onsiteCode.addEventListener("input", () => {
   state.onsiteCode = el.onsiteCode.value.trim();
   render();
@@ -954,20 +935,6 @@ el.saveProductBtn.addEventListener("click", (event) => {
   saveProductFromDialog();
 });
 el.exportBtn.addEventListener("click", exportExcel);
-
-el.passwordForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-  if (!state.published) {
-    toast("目前尚未開放下單");
-    return;
-  }
-  if (el.passwordInput.value.trim() !== state.password) {
-    toast("密碼不正確");
-    return;
-  }
-  sessionStorage.setItem(getPasswordSessionKey(), state.password);
-  render();
-});
 
 el.productSelect.addEventListener("change", updateCheckout);
 el.quantity.addEventListener("input", updateCheckout);

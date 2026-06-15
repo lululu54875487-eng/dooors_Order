@@ -56,7 +56,6 @@ function normalizeState_(state) {
     exhibitionName: state.exhibitionName || "",
     exhibitionDate: state.exhibitionDate || "",
     headerImage: state.headerImage || "",
-    password: state.password || "",
     onsiteCode: state.onsiteCode || "",
     paymentAccount: state.paymentAccount || "",
     paymentQrImage: state.paymentQrImage || "",
