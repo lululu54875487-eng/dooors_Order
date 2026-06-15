@@ -1,6 +1,6 @@
 const STORAGE_KEY = "exhibition-order-state";
 const GAS_URL_KEY = "exhibition-order-gas-url";
-const DEFAULT_GAS_URL = "";
+const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbzPfIdE2OrVtQAr0UabiqYOyVErvrBYkzsEdMS91Tnlbt9wbWGUOAEIOR_zSb12u4uU/exec";
 
 const defaultProducts = [
   { id: "sample-1", name: "範例商品 A", price: 680, limit: 2 },
