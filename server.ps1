@@ -13,10 +13,8 @@ if (-not (Test-Path $DataDir)) {
 if (-not (Test-Path $DataFile)) {
   @{
     eventId = [guid]::NewGuid().ToString()
-    exhibitionName = ""
+    exhibitionName = "展覽訂單"
     exhibitionDate = ""
-    headerImage = ""
-    onsiteCode = ""
     paymentAccount = ""
     paymentQrImage = ""
     published = $false

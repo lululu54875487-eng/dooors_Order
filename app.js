@@ -10,10 +10,8 @@ const defaultProducts = [
 function createEmptyState() {
   return {
     eventId: createId(),
-    exhibitionName: "",
+    exhibitionName: "展覽訂單",
     exhibitionDate: "",
-    headerImage: "",
-    onsiteCode: "",
     paymentAccount: "",
     paymentQrImage: "",
     published: false,
@@ -34,17 +32,9 @@ let lastSubmittedOrderId = null;
 
 const el = {
   modeStatus: document.querySelector("#modeStatus"),
-  setupHint: document.querySelector("#setupHint"),
   adminView: document.querySelector("#adminView"),
   sellerView: document.querySelector("#sellerView"),
   customerView: document.querySelector("#customerView"),
-  exhibitionName: document.querySelector("#exhibitionName"),
-  exhibitionDate: document.querySelector("#exhibitionDate"),
-  headerImageFile: document.querySelector("#headerImageFile"),
-  headerPreview: document.querySelector("#headerPreview"),
-  heroImage: document.querySelector("#heroImage"),
-  removeHeaderImageBtn: document.querySelector("#removeHeaderImageBtn"),
-  onsiteCode: document.querySelector("#onsiteCode"),
   paymentAccount: document.querySelector("#paymentAccount"),
   paymentQrFile: document.querySelector("#paymentQrFile"),
   paymentQrPreview: document.querySelector("#paymentQrPreview"),
@@ -52,7 +42,6 @@ const el = {
   removePaymentQrBtn: document.querySelector("#removePaymentQrBtn"),
   publishBtn: document.querySelector("#publishBtn"),
   closeBtn: document.querySelector("#closeBtn"),
-  resetBtn: document.querySelector("#resetBtn"),
   gasSettingsBox: document.querySelector("#gasSettingsBox"),
   gasUrl: document.querySelector("#gasUrl"),
   saveGasBtn: document.querySelector("#saveGasBtn"),
@@ -87,7 +76,6 @@ const el = {
   recipientAddress: document.querySelector("#recipientAddress"),
   orderAmount: document.querySelector("#orderAmount"),
   paymentMethod: document.querySelector("#paymentMethod"),
-  orderOnsiteCode: document.querySelector("#orderOnsiteCode"),
   note: document.querySelector("#note"),
   successMessage: document.querySelector("#successMessage"),
   paymentInfo: document.querySelector("#paymentInfo"),
@@ -103,6 +91,14 @@ const el = {
 
 function createId() {
   return globalThis.crypto?.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function getTodayValue() {
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 function loadInitialState() {
@@ -300,22 +296,17 @@ function render() {
     return;
   }
 
-  el.setupHint.textContent = state.exhibitionDate ? `展覽日期：${formatDisplayDate(state.exhibitionDate)}` : "可提前完成展覽資訊、商品與收款設定";
-  el.exhibitionName.value = state.exhibitionName;
-  el.exhibitionDate.value = state.exhibitionDate || "";
-  el.onsiteCode.value = state.onsiteCode || "";
   el.paymentAccount.value = state.paymentAccount;
   el.gasSettingsBox.classList.toggle("hidden", Boolean(DEFAULT_GAS_URL));
   el.gasUrl.value = gasUrl;
   el.customerUrl.value = getCustomerUrl();
-  el.publishBtn.disabled = !state.exhibitionName.trim() || !state.onsiteCode.trim();
+  el.publishBtn.disabled = false;
   el.closeBtn.disabled = !state.published;
 
   renderProducts();
   renderProductPanelState();
   renderOrders();
   renderTotals();
-  renderHeaderImage();
   renderPaymentQr();
   renderQr(el.customerUrl.value);
   renderRemoteStatus();
@@ -328,16 +319,6 @@ function renderProductPanelState() {
   el.toggleProductsBtn.title = collapsed ? "展開商品設定" : "收合商品設定";
   el.toggleProductsBtn.setAttribute("aria-label", collapsed ? "展開商品設定" : "收合商品設定");
   el.toggleProductsBtn.setAttribute("aria-expanded", String(!collapsed));
-}
-
-function renderHeaderImage() {
-  const hasImage = Boolean(state.headerImage);
-  el.heroImage.src = hasImage ? state.headerImage : "";
-  el.headerPreview.src = hasImage ? state.headerImage : "";
-  el.heroImage.classList.toggle("hidden", !hasImage);
-  el.headerPreview.classList.toggle("hidden", !hasImage);
-  document.querySelector(".topbar").classList.toggle("has-hero-image", hasImage);
-  el.removeHeaderImageBtn.disabled = !hasImage;
 }
 
 function renderPaymentQr() {
@@ -460,15 +441,13 @@ function renderTotals() {
 }
 
 function renderCustomer() {
-  el.customerTitle.textContent = state.exhibitionName || "填寫訂單";
-  const eventLabel = [state.exhibitionName || "本次展覽", state.exhibitionDate ? formatDisplayDate(state.exhibitionDate) : ""].filter(Boolean).join(" · ");
-  el.customerHint.textContent = state.published ? `${eventLabel} 開放下單中` : "目前尚未開放下單";
+  el.customerTitle.textContent = "填寫訂單";
+  el.customerHint.textContent = state.published ? "請填寫訂單金額與收件資訊" : "目前尚未開放下單";
   const showingSuccess = !el.successPanel.classList.contains("hidden");
   el.orderPanel.classList.toggle("hidden", !state.published || showingSuccess);
   if (!showingSuccess) {
     el.successPanel.classList.add("hidden");
   }
-  renderHeaderImage();
   renderPaymentQr();
 }
 
@@ -629,11 +608,6 @@ function exportProductsCsv() {
 }
 
 function submitOrder() {
-  if (el.orderOnsiteCode.value.trim() !== state.onsiteCode) {
-    toast("現場驗證碼不正確，請向攤位確認");
-    return;
-  }
-
   const amount = Number(el.orderAmount.value) || 0;
   if (amount <= 0) {
     toast("請輸入訂單金額");
@@ -669,7 +643,7 @@ function submitOrder() {
   saveRemoteOrder(order);
   el.orderForm.reset();
   el.successMessage.textContent = `訂單金額 ${formatMoney(order.total)}。`;
-  el.paymentInfo.textContent = state.paymentAccount || "現場可洽賣家付款。";
+  el.paymentInfo.textContent = state.paymentAccount || "請依現場提供的收款方式付款。";
   el.orderPanel.classList.add("hidden");
   el.successPanel.classList.remove("hidden");
 }
@@ -697,7 +671,6 @@ function editLastSubmittedOrder() {
   el.recipientAddress.value = order.address || "";
   el.orderAmount.value = order.total || "";
   el.paymentMethod.value = order.paymentMethod || "transfer";
-  el.orderOnsiteCode.value = state.onsiteCode || "";
   el.note.value = order.note || "";
   el.successPanel.classList.add("hidden");
   el.orderPanel.classList.remove("hidden");
@@ -838,46 +811,6 @@ function renderQr(text) {
   el.qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=192x192&data=${encodeURIComponent(text)}`;
 }
 
-el.exhibitionName.addEventListener("input", () => {
-  state.exhibitionName = el.exhibitionName.value.trim();
-  render();
-  persist();
-});
-
-el.exhibitionDate.addEventListener("input", () => {
-  state.exhibitionDate = el.exhibitionDate.value;
-  render();
-  persist();
-});
-
-el.headerImageFile.addEventListener("change", async () => {
-  const file = el.headerImageFile.files[0];
-  if (!file) return;
-  try {
-    state.headerImage = await readCompressedImage(file);
-    el.headerImageFile.value = "";
-    render();
-    persist();
-    toast("已更新頁首圖片");
-  } catch (error) {
-    el.headerImageFile.value = "";
-    toast(error.message || "圖片上傳失敗");
-  }
-});
-
-el.removeHeaderImageBtn.addEventListener("click", () => {
-  state.headerImage = "";
-  render();
-  persist();
-  toast("已移除頁首圖片");
-});
-
-el.onsiteCode.addEventListener("input", () => {
-  state.onsiteCode = el.onsiteCode.value.trim();
-  render();
-  persist();
-});
-
 el.paymentAccount.addEventListener("input", () => {
   state.paymentAccount = el.paymentAccount.value.trim();
   persist();
@@ -906,6 +839,8 @@ el.removePaymentQrBtn.addEventListener("click", () => {
 });
 
 el.publishBtn.addEventListener("click", () => {
+  state.exhibitionName = state.exhibitionName || "展覽訂單";
+  state.exhibitionDate = state.exhibitionDate || getTodayValue();
   state.published = true;
   render();
   persist();
@@ -917,13 +852,6 @@ el.closeBtn.addEventListener("click", () => {
   render();
   persist();
   toast("已關閉下單");
-});
-
-el.resetBtn.addEventListener("click", () => {
-  if (!confirm("確定要重新建立本次展覽？既有訂單會清空。")) return;
-  state = createEmptyState();
-  render();
-  persist();
 });
 
 el.saveGasBtn.addEventListener("click", () => {

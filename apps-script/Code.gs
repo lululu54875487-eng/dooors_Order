@@ -52,10 +52,8 @@ function getState_() {
 function normalizeState_(state) {
   return {
     eventId: state.eventId || Utilities.getUuid(),
-    exhibitionName: state.exhibitionName || "",
-    exhibitionDate: state.exhibitionDate || "",
-    headerImage: state.headerImage || "",
-    onsiteCode: state.onsiteCode || "",
+    exhibitionName: state.exhibitionName || "展覽訂單",
+    exhibitionDate: state.exhibitionDate || getTodayValue_(),
     paymentAccount: state.paymentAccount || "",
     paymentQrImage: state.paymentQrImage || "",
     published: Boolean(state.published),
@@ -120,9 +118,14 @@ function getOrderSheet_(state) {
 }
 
 function getOrderSheetName_(state) {
-  const date = state.exhibitionDate || "未設定日期";
-  const name = state.exhibitionName || "未命名展覽";
+  const date = state.exhibitionDate || getTodayValue_();
+  const name = state.exhibitionName || "展覽訂單";
   return sanitizeSheetName_(`${date}_${name}`);
+}
+
+function getTodayValue_() {
+  const timezone = Session.getScriptTimeZone() || "Asia/Taipei";
+  return Utilities.formatDate(new Date(), timezone, "yyyy-MM-dd");
 }
 
 function sanitizeSheetName_(name) {

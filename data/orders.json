@@ -1,9 +1,7 @@
 {
   "eventId": "today-exhibition",
-  "exhibitionName": "",
+  "exhibitionName": "展覽訂單",
   "exhibitionDate": "",
-  "headerImage": "",
-  "onsiteCode": "",
   "paymentAccount": "",
   "paymentQrImage": "",
   "published": false,

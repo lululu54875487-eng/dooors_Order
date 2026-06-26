@@ -25,41 +25,7 @@
 
     <main class="app-shell">
       <section class="workspace setup-only" id="adminView">
-        <div class="panel setup-panel">
-          <div class="panel-heading">
-            <div>
-              <h2>佈展設定</h2>
-              <p id="setupHint">可提前完成展覽資訊、商品與收款設定</p>
-            </div>
-            <button class="icon-button" id="resetBtn" type="button" title="重新建立本次展覽" aria-label="重新建立本次展覽">↻</button>
-          </div>
-
-          <label class="field">
-            <span>展覽名稱</span>
-            <input id="exhibitionName" type="text" placeholder="例：台北手作市集 6/15">
-          </label>
-
-          <label class="field">
-            <span>展覽日期</span>
-            <input id="exhibitionDate" type="date">
-          </label>
-
-          <div class="field">
-            <span>頁首圖片</span>
-            <div class="image-upload-row">
-              <input id="headerImageFile" type="file" accept="image/*">
-              <button class="secondary" id="removeHeaderImageBtn" type="button">移除圖片</button>
-            </div>
-            <img class="header-preview hidden" id="headerPreview" alt="頁首圖片預覽">
-            <p class="helper">適合上傳品牌圖、攤位主視覺或商品氛圍照，系統會自動壓縮。</p>
-          </div>
-
-          <label class="field">
-            <span>現場驗證碼</span>
-            <input id="onsiteCode" type="text" placeholder="例：攤位現場公布的 4 碼口令">
-            <small class="field-note">客戶送出訂單時必填；若擔心轉傳，可中途更換現場驗證碼。</small>
-          </label>
-
+        <div class="panel setup-panel simple-setup-panel">
           <label class="field">
             <span>收款帳戶</span>
             <textarea id="paymentAccount" rows="4" placeholder="例：銀行代碼 000 / 帳號 123456789 / 戶名 王小明&#10;也可填寫：現場可收現金"></textarea>
@@ -103,7 +69,7 @@
             </div>
             <div class="qr-box">
               <img id="qrImage" alt="客戶下單 QR Code">
-              <p>將這個 QR Code 放在展場，客戶掃描後輸入當天密碼即可下單。</p>
+              <p>將這個 QR Code 放在展場，客戶掃描後填寫訂單金額與收件資訊即可送出。</p>
             </div>
           </div>
         </div>
@@ -202,12 +168,8 @@
                 </select>
               </label>
               <label class="field wide">
-                <span>現場驗證碼</span>
-                <input id="orderOnsiteCode" type="text" placeholder="請輸入攤位現場公布的驗證碼" required>
-              </label>
-              <label class="field wide">
                 <span>備註</span>
-                <input id="note" type="text" placeholder="尺寸、顏色、希望到貨時間等">
+                <input id="note" type="text">
               </label>
             </div>
             <button class="primary full" type="submit">提交訂單</button>
